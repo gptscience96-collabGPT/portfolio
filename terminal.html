@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terminal — Alif Media</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#080808;--white:#f2efe8;--red:#c8392b;--gold:#b8965a;
+  --green:#4caf82;--cyan:#5bc4d4;--dim2:#1a1815;--muted:#7a7060;
+  --term-green:#39ff14;--term-amber:#ffb300;
+  --fd:'Bebas Neue',sans-serif;--fm:'DM Mono',monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{
+  background:var(--black);color:var(--white);
+  font-family:var(--fm);font-size:13px;
+  min-height:100vh;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* ── NOISE ── */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");pointer-events:none;z-index:9990;opacity:.4;}
+
+/* ── SCANLINE effect ── */
+body::after{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);
+  pointer-events:none;z-index:9989;
+}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  height:56px;padding:0 24px;
+  display:flex;justify-content:space-between;align-items:center;
+  background:rgba(8,8,8,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:rgba(57,255,20,.12);}
+.nav-logo{font-family:var(--fd);font-size:20px;letter-spacing:.12em;color:var(--white);text-decoration:none;}
+.nav-logo span{color:var(--red);}
+.nav-back{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .18s,transform .2s;padding:8px 0;}
+.nav-back:hover{color:var(--white);transform:translateX(-3px);}
+.nav-back svg{width:15px;}
+.nav-badge{font-size:9.5px;letter-spacing:.14em;color:var(--term-green);border:1px solid rgba(57,255,20,.2);padding:5px 12px;animation:blink 2.5s ease infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* ── PAGE HEADER ── */
+.page-hdr{
+  padding:clamp(80px,14vw,130px) 24px clamp(24px,4vw,40px);
+  position:relative;overflow:hidden;
+  border-bottom:1px solid rgba(57,255,20,.07);
+}
+.ph-eyebrow{font-size:9px;color:var(--term-green);letter-spacing:.3em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
+.ph-eyebrow::before{content:'';width:28px;height:1px;background:var(--term-green);}
+.ph-h1{font-family:var(--fd);font-size:clamp(52px,11vw,130px);line-height:.88;letter-spacing:.02em;}
+.ph-sub{font-size:11px;color:var(--muted);letter-spacing:.12em;margin-top:10px;}
+.ph-sub span{color:var(--term-green);}
+
+/* ── MAIN LAYOUT ── */
+.terminal-layout{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+  min-height:calc(100vh - 56px);
+  border-top:1px solid rgba(57,255,20,.07);
+}
+
+/* ── TERMINAL PANEL ── */
+.term-panel{
+  background:#030303;
+  border-right:1px solid rgba(57,255,20,.07);
+  display:flex;flex-direction:column;
+  height:calc(100vh - 56px);
+  position:sticky;top:56px;
+}
+.term-bar{
+  background:#0e0e0e;
+  border-bottom:1px solid rgba(57,255,20,.08);
+  padding:10px 16px;
+  display:flex;align-items:center;gap:10px;
+  flex-shrink:0;
+}
+.term-dot{width:10px;height:10px;border-radius:50%;}
+.td-red{background:#c8392b;}.td-yellow{background:#b8965a;}.td-green{background:#4caf82;}
+.term-title{font-size:10px;color:var(--muted);letter-spacing:.14em;margin-left:6px;}
+.term-output{
+  flex:1;overflow-y:auto;padding:16px;
+  font-size:12px;line-height:1.75;
+  scrollbar-width:thin;scrollbar-color:rgba(57,255,20,.15) transparent;
+  -webkit-overflow-scrolling:touch;
+}
+.term-output::-webkit-scrollbar{width:4px;}
+.term-output::-webkit-scrollbar-track{background:transparent;}
+.term-output::-webkit-scrollbar-thumb{background:rgba(57,255,20,.2);border-radius:2px;}
+.term-line{display:block;opacity:0;animation:lineIn .15s ease forwards;}
+@keyframes lineIn{to{opacity:1;}}
+.t-green{color:var(--term-green);}
+.t-red{color:var(--red);}
+.t-gold{color:var(--gold);}
+.t-cyan{color:var(--cyan);}
+.t-muted{color:var(--muted);}
+.t-white{color:var(--white);}
+.t-bold{font-weight:700;}
+.term-prompt{display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid rgba(57,255,20,.07);flex-shrink:0;}
+.prompt-sign{color:var(--term-green);font-size:12px;}
+.term-input{
+  flex:1;background:none;border:none;outline:none;
+  color:var(--term-green);font-family:var(--fm);font-size:12px;
+  caret-color:var(--term-green);
+}
+.term-input::placeholder{color:rgba(57,255,20,.2);}
+.cursor-blink{
+  display:inline-block;width:7px;height:13px;
+  background:var(--term-green);
+  animation:curBlink .8s ease infinite;
+  vertical-align:middle;margin-left:1px;
+}
+@keyframes curBlink{0%,49%{opacity:1;}50%,100%{opacity:0;}}
+
+/* ── GAME PANEL ── */
+.game-panel{
+  background:#050505;
+  display:flex;flex-direction:column;
+  height:calc(100vh - 56px);
+  position:sticky;top:56px;
+  overflow:hidden;
+}
+.game-bar{
+  background:#0a0a0a;
+  border-bottom:1px solid rgba(57,255,20,.08);
+  padding:10px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.game-title{font-size:10px;color:var(--term-green);letter-spacing:.2em;text-transform:uppercase;}
+.game-stats{display:flex;gap:20px;font-size:10px;color:var(--muted);}
+.game-stats span{color:var(--term-green);}
+.game-area{
+  flex:1;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+  position:relative;
+}
+/* ASCII canvas */
+#gameCanvas{
+  font-family:var(--fm);
+  font-size:clamp(7px,1.1vw,12px);
+  line-height:1.2;
+  color:var(--term-green);
+  white-space:pre;
+  text-shadow:0 0 4px rgba(57,255,20,.35);
+  letter-spacing:.05em;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.game-controls{
+  border-top:1px solid rgba(57,255,20,.07);
+  padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.game-hint{font-size:9.5px;color:var(--muted);letter-spacing:.12em;}
+.game-hint span{color:var(--term-green);}
+.game-btn{
+  padding:6px 14px;border:1px solid rgba(57,255,20,.2);
+  background:none;color:var(--term-green);font-family:var(--fm);font-size:10px;
+  letter-spacing:.14em;cursor:pointer;
+  transition:all .18s;-webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.game-btn:hover{background:rgba(57,255,20,.07);border-color:var(--term-green);}
+.game-btn:active{transform:scale(.96);}
+
+/* Mobile game d-pad */
+.dpad{
+  display:none;
+  flex-direction:column;align-items:center;gap:6px;
+  padding:14px 16px 16px;
+  border-top:1px solid rgba(57,255,20,.07);
+  background:#030303;
+}
+.dpad-row{display:flex;gap:6px;}
+.dpad-btn{
+  width:64px;height:64px;
+  border:1px solid rgba(57,255,20,.25);background:rgba(57,255,20,.05);
+  color:var(--term-green);font-size:22px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  border-radius:6px;
+  transition:background .1s,transform .08s,border-color .1s;
+  user-select:none;-webkit-user-select:none;
+}
+.dpad-btn:active{background:rgba(57,255,20,.2);transform:scale(.9);border-color:var(--term-green);}
+.dpad-spacer{width:64px;height:64px;}
+
+/* ── INFO SECTION (below sticky panels on mobile) ── */
+.info-section{
+  grid-column:1/-1;
+  padding:clamp(48px,8vw,80px) 24px;
+  border-top:1px solid rgba(57,255,20,.07);
+  background:#040404;
+}
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(57,255,20,.06);}
+.info-card{background:#040404;padding:clamp(24px,4vw,40px) clamp(18px,3vw,28px);}
+.ic-num{font-family:var(--fd);font-size:clamp(40px,6vw,64px);color:rgba(57,255,20,.08);line-height:1;margin-bottom:14px;}
+.ic-title{font-family:var(--fd);font-size:clamp(20px,2.5vw,28px);letter-spacing:.04em;color:var(--term-green);margin-bottom:10px;}
+.ic-desc{color:var(--muted);line-height:1.8;font-size:11.5px;}
+.ascii-art{
+  grid-column:1/-1;
+  background:#020202;
+  padding:clamp(32px,5vw,56px) 24px;
+  border-top:1px solid rgba(57,255,20,.06);
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+}
+.ascii-art pre{
+  font-family:var(--fm);
+  font-size:clamp(6px,1vw,11px);
+  line-height:1.2;
+  color:rgba(57,255,20,.5);
+  text-shadow:0 0 3px rgba(57,255,20,.15);
+  white-space:pre;
+}
+
+/* ── MOBILE RESPONSIVE ── */
+@media(max-width:900px){
+  .terminal-layout{
+    grid-template-columns:1fr;
+    min-height:auto;
+  }
+  .term-panel,.game-panel{
+    height:62vh;min-height:340px;
+    position:relative;top:0;
+  }
+  .dpad{display:flex;}
+  .info-grid{grid-template-columns:1fr;}
+}
+@media(max-width:480px){
+  .term-panel{height:55vmax;min-height:280px;}
+  .game-panel{height:auto;min-height:300px;}
+  #gameCanvas{font-size:8px;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">AL<span>·</span>IF</a>
+  <div class="nav-badge">● SYS ACTIVE</div>
+  <a href="index.html" class="nav-back">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back
+  </a>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-hdr">
+  <div class="ph-eyebrow">System Interface · Alif Media</div>
+  <h1 class="ph-h1">TERMINAL</h1>
+  <div class="ph-sub">root@alif:~$ <span>_</span> &nbsp;·&nbsp; Ask the system anything</div>
+</div>
+
+<div class="terminal-layout">
+
+  <!-- ── TERMINAL PANEL ── -->
+  <div class="term-panel">
+    <div class="term-bar">
+      <div class="term-dot td-red"></div>
+      <div class="term-dot td-yellow"></div>
+      <div class="term-dot td-green"></div>
+      <span class="term-title">alif@portfolio ~ bash</span>
+    </div>
+    <div class="term-output" id="termOutput"></div>
+    <div class="term-prompt">
+      <span class="prompt-sign">$</span>
+      <input class="term-input" id="termInput" type="text" placeholder="type 'help' for commands..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+  </div>
+
+  <!-- ── GAME PANEL ── -->
+  <div class="game-panel">
+    <div class="game-bar">
+      <div class="game-title">◈ Snake.exe — ASCII Edition</div>
+      <div class="game-stats">Score: <span id="gScore">0</span> &nbsp; Hi: <span id="gHi">0</span></div>
+    </div>
+    <div class="game-area">
+      <pre id="gameCanvas"></pre>
+    </div>
+    <div class="game-controls">
+      <div class="game-hint"><span>↑ ↓ ← →</span> or <span>WASD</span> to move &nbsp;|&nbsp; <span>SPACE</span> pause</div>
+      <button class="game-btn" id="restartBtn">⟳ RESTART</button>
+    </div>
+    <!-- Mobile D-pad -->
+    <div class="dpad" id="dpad">
+      <div class="dpad-row">
+        <div class="dpad-spacer"></div>
+        <button class="dpad-btn" data-dir="UP">▲</button>
+        <div class="dpad-spacer"></div>
+      </div>
+      <div class="dpad-row">
+        <button class="dpad-btn" data-dir="LEFT">◄</button>
+        <button class="dpad-btn" data-dir="DOWN">▼</button>
+        <button class="dpad-btn" data-dir="RIGHT">►</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INFO CARDS ── -->
+  <div class="info-section">
+    <div class="ascii-art">
+<pre>
+  █████╗ ██╗     ██╗███████╗    ███╗   ███╗███████╗██████╗ ██╗ █████╗
+ ██╔══██╗██║     ██║██╔════╝    ████╗ ████║██╔════╝██╔══██╗██║██╔══██╗
+ ███████║██║     ██║█████╗      ██╔████╔██║█████╗  ██║  ██║██║███████║
+ ██╔══██║██║     ██║██╔══╝      ██║╚██╔╝██║██╔══╝  ██║  ██║██║██╔══██║
+ ██║  ██║███████╗██║██║         ██║ ╚═╝ ██║███████╗██████╔╝██║██║  ██║
+ ╚═╝  ╚═╝╚══════╝╚═╝╚═╝         ╚═╝     ╚═╝╚══════╝╚═════╝ ╚═╝╚═╝  ╚═╝
+ ─────────────────────────────────────────────────────────────────────
+  [  DEVELOPER  ·  PHOTOGRAPHER  ·  DIRECTOR  ]  EST. 2026
+</pre>
+    </div>
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="ic-num">01</div>
+        <div class="ic-title">TERMINAL</div>
+        <div class="ic-desc">Type commands like <code style="color:var(--term-green)">whoami</code>, <code style="color:var(--term-green)">skills</code>, <code style="color:var(--term-green)">contact</code>, or <code style="color:var(--term-green)">ls</code> to explore. Try <code style="color:var(--term-green)">help</code> for the full list.</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-num">02</div>
+        <div class="ic-title">ASCII SNAKE</div>
+        <div class="ic-desc">A fully playable ASCII Snake game. Eat <code style="color:var(--term-green)">◆</code> to grow. Don't hit the walls or yourself. Use arrow keys, WASD, or the d-pad on mobile.</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-num">03</div>
+        <div class="ic-title">PHILOSOPHY</div>
+        <div class="ic-desc">Every pixel, every frame, every line of code — crafted with precision. This terminal proves that even constraint is a canvas. Built by a systems engineer who thinks in code and shoots in light.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /terminal-layout -->
+
+<script>
+// ═══════════════════════════════════════════════
+// TERMINAL ENGINE
+// ═══════════════════════════════════════════════
+const out = document.getElementById('termOutput');
+const inp = document.getElementById('termInput');
+let cmdHistory = [];
+let histIdx = -1;
+
+const BOOT = [
+  {t:'t-muted',  s: '────────────────────────────────────────────'},
+  {t:'t-green',  s: 'ALIF MEDIA OS  v2.26.0 LTS'},
+  {t:'t-muted',  s: 'Kernel: alif-systems-core 5.15.0'},
+  {t:'t-muted',  s: 'Arch: x86_64-apple-darwin (formerly)'},
+  {t:'t-muted',  s: '────────────────────────────────────────────'},
+  {t:'t-gold',   s: 'Last login: Fri Mar 13 2026'},
+  {t:'t-white',  s: ''},
+  {t:'t-cyan',   s: '  Welcome to the Alif portfolio terminal.'},
+  {t:'t-muted',  s: '  Type "help" to see available commands.'},
+  {t:'t-muted',  s: '  Type "whoami" to learn about the operator.'},
+  {t:'t-white',  s: ''},
+  {t:'t-muted',  s: '────────────────────────────────────────────'},
+];
+
+const COMMANDS = {
+  help: () => [
+    {t:'t-green',  s:'AVAILABLE COMMANDS'},
+    {t:'t-muted',  s:'──────────────────────────────────────'},
+    {t:'t-white',  s:'  whoami          — system operator info'},
+    {t:'t-white',  s:'  skills          — languages & expertise'},
+    {t:'t-white',  s:'  stack           — current tech stack'},
+    {t:'t-white',  s:'  work            — project history'},
+    {t:'t-white',  s:'  apple           — the Apple chapter'},
+    {t:'t-white',  s:'  photography     — visual work'},
+    {t:'t-white',  s:'  contact         — get in touch'},
+    {t:'t-white',  s:'  ls              — list files'},
+    {t:'t-white',  s:'  cat [file]      — read a file'},
+    {t:'t-white',  s:'  uname           — system info'},
+    {t:'t-white',  s:'  neofetch        — system summary'},
+    {t:'t-white',  s:'  ascii           — ASCII art gallery'},
+    {t:'t-white',  s:'  matrix          — go deeper'},
+    {t:'t-white',  s:'  clear           — clear terminal'},
+    {t:'t-muted',  s:'──────────────────────────────────────'},
+  ],
+  whoami: () => [
+    {t:'t-green',  s:'  ┌─ OPERATOR PROFILE ─────────────────┐'},
+    {t:'t-white',  s:'  │  Name    : Alif                     │'},
+    {t:'t-white',  s:'  │  Handle  : @alif.media_             │'},
+    {t:'t-white',  s:'  │  Role    : Developer · Photographer │'},
+    {t:'t-white',  s:'  │            Director                 │'},
+    {t:'t-gold',   s:'  │  Former  : Eng. @ Apple Inc.        │'},
+    {t:'t-green',  s:'  │  Status  : ● Available              │'},
+    {t:'t-cyan',   s:'  │  Vision  : Code meets Cinema        │'},
+    {t:'t-white',  s:'  │  Base    : Dhaka, BD                │'},
+    {t:'t-green',  s:'  └─────────────────────────────────────┘'},
+  ],
+  skills: () => [
+    {t:'t-green',  s:'LANGUAGE ARSENAL — 50+ TOTAL'},
+    {t:'t-muted',  s:'──────────────────────────────────────────────────'},
+    {t:'t-gold',   s:'  TIER I   (Core Masters)'},
+    {t:'t-white',  s:'  Python · Java · C · C++ · Rust · Go'},
+    {t:'t-white',  s:'  JavaScript · TypeScript · Swift · Kotlin'},
+    {t:'t-muted',  s:''},
+    {t:'t-gold',   s:'  TIER II  (Extended Arsenal)'},
+    {t:'t-white',  s:'  C# · Scala · Haskell · Elixir · Erlang · Zig'},
+    {t:'t-white',  s:'  Dart · Ruby · Julia · OCaml · F# · Solidity'},
+    {t:'t-white',  s:'  Assembly · Bash · PowerShell · SQL · Lua'},
+    {t:'t-white',  s:'  PHP · R · Perl'},
+    {t:'t-muted',  s:''},
+    {t:'t-gold',   s:'  TIER III (Domain Specific)'},
+    {t:'t-white',  s:'  VHDL · Verilog · Nim · Crystal · Hack'},
+    {t:'t-white',  s:'  GDScript · Tcl · WebAssembly · Fortran'},
+    {t:'t-white',  s:'  Ada · Objective-C · MATLAB · Groovy'},
+    {t:'t-white',  s:'  Visual Basic .NET · Scheme · Prolog'},
+    {t:'t-muted',  s:''},
+    {t:'t-gold',   s:'  TIER IV  (Esoteric & Legacy)'},
+    {t:'t-muted',  s:'  Smalltalk · COBOL · Apex · Pony'},
+    {t:'t-muted',  s:'──────────────────────────────────────────────────'},
+  ],
+  stack: () => [
+    {t:'t-green',  s:'CURRENT TECH STACK'},
+    {t:'t-muted',  s:'──────────────────────────────────────'},
+    {t:'t-cyan',   s:'  Systems    :'},
+    {t:'t-white',  s:'    Rust, Go, C, Assembly, Zig'},
+    {t:'t-cyan',   s:'  Web        :'},
+    {t:'t-white',  s:'    TypeScript, Bun, Deno, React, Next.js'},
+    {t:'t-cyan',   s:'  Mobile     :'},
+    {t:'t-white',  s:'    Swift (iOS), Kotlin (Android)'},
+    {t:'t-cyan',   s:'  Blockchain :'},
+    {t:'t-white',  s:'    Solidity, Web3, Hardhat'},
+    {t:'t-cyan',   s:'  Hardware   :'},
+    {t:'t-white',  s:'    VHDL, Verilog, FPGA, embedded C'},
+    {t:'t-cyan',   s:'  Creative   :'},
+    {t:'t-white',  s:'    Premiere Pro, DaVinci Resolve'},
+    {t:'t-white',  s:'    Lightroom, Capture One'},
+    {t:'t-muted',  s:'──────────────────────────────────────'},
+  ],
+  work: () => [
+    {t:'t-green',  s:'PROJECT LOG — SELECTED'},
+    {t:'t-muted',  s:'──────────────────────────────────────────────────'},
+    {t:'t-gold',   s:'  [2025]  Distributed Runtime'},
+    {t:'t-white',  s:'          Custom async runtime in Rust + Assembly'},
+    {t:'t-white',  s:'          Multi-region scheduling, lock-free queues'},
+    {t:'t-muted',  s:''},
+    {t:'t-gold',   s:'  [2025]  Edge Platform'},
+    {t:'t-white',  s:'          TypeScript/Bun edge compute framework'},
+    {t:'t-white',  s:'          SIN + LAX region deployment'},
+    {t:'t-muted',  s:''},
+    {t:'t-gold',   s:'  [2024]  FPGA Logic Design'},
+    {t:'t-white',  s:'          High-throughput data pipeline in VHDL/Verilog'},
+    {t:'t-muted',  s:''},
+    {t:'t-gold',   s:'  [2025]  Smart Contract Protocol'},
+    {t:'t-white',  s:'          DeFi vault system — Solidity + Web3'},
+    {t:'t-muted',  s:''},
+    {t:'t-gold',   s:'  [2024]  Native App Development'},
+    {t:'t-white',  s:'          Cross-platform Swift + Kotlin codebase'},
+    {t:'t-muted',  s:'──────────────────────────────────────────────────'},
+  ],
+  apple: () => [
+    {t:'t-gold',   s:'  ┌─────────────────────────────────────┐'},
+    {t:'t-gold',   s:'  │  ▲  Software Engineer @ Apple Inc.  │'},
+    {t:'t-muted',  s:'  │  ─────────────────────────────────  │'},
+    {t:'t-white',  s:'  │  Worked on system-level software     │'},
+    {t:'t-white',  s:'  │  Precision. Performance. No excuses. │'},
+    {t:'t-white',  s:'  │  The same standards now apply to     │'},
+    {t:'t-white',  s:'  │  every line of code & every frame.   │'},
+    {t:'t-gold',   s:'  └─────────────────────────────────────┘'},
+  ],
+  photography: () => [
+    {t:'t-green',  s:'VISUAL PORTFOLIO'},
+    {t:'t-muted',  s:'──────────────────────────────────────'},
+    {t:'t-cyan',   s:'  Client   : Morning Glory School & College'},
+    {t:'t-white',  s:'  Work     : Institutional photography'},
+    {t:'t-white',  s:'            Promotional video/reels'},
+    {t:'t-white',  s:'            Events & portrait work'},
+    {t:'t-gold',   s:'  Reel     : Live on Facebook (2026)'},
+    {t:'t-green',  s:'  Status   : ● Ongoing collaboration'},
+    {t:'t-muted',  s:'──────────────────────────────────────'},
+    {t:'t-white',  s:'  → gallery.html to see the work'},
+  ],
+  contact: () => [
+    {t:'t-green',  s:'CONTACT CHANNELS'},
+    {t:'t-muted',  s:'──────────────────────────────────────'},
+    {t:'t-cyan',   s:'  Instagram (Work)    :'},
+    {t:'t-white',  s:'    @alif.media_'},
+    {t:'t-cyan',   s:'  Instagram (Personal):'},
+    {t:'t-white',  s:'    @_theycallmealif_'},
+    {t:'t-cyan',   s:'  Email               :'},
+    {t:'t-white',  s:'    mdalif8700@gmail.com'},
+    {t:'t-muted',  s:'──────────────────────────────────────'},
+    {t:'t-gold',   s:'  Open to: Engineering · Creative · Collab'},
+  ],
+  ls: () => [
+    {t:'t-muted',  s:'total 5'},
+    {t:'t-cyan',   s:'drwxr-xr-x  index.html       — Portfolio Home'},
+    {t:'t-cyan',   s:'drwxr-xr-x  gallery.html     — Visual Archive'},
+    {t:'t-cyan',   s:'drwxr-xr-x  terminal.html    — System Interface (you are here)'},
+    {t:'t-muted',  s:'-rw-r--r--  README.md        — About this system'},
+    {t:'t-muted',  s:'-rw-r--r--  .bashrc          — [CLASSIFIED]'},
+  ],
+  'cat README.md': () => [
+    {t:'t-green',  s:'README.md'},
+    {t:'t-muted',  s:'──────────────────────────────────────'},
+    {t:'t-white',  s:'  Alif Media Portfolio v2.26.0'},
+    {t:'t-white',  s:''},
+    {t:'t-white',  s:'  Built with: pure HTML · CSS · JS'},
+    {t:'t-white',  s:'  No frameworks. No dependencies.'},
+    {t:'t-white',  s:'  Just craft.'},
+    {t:'t-white',  s:''},
+    {t:'t-white',  s:'  Design: Dark editorial brutalism.'},
+    {t:'t-white',  s:'  Performance: Optimized for 1GB RAM devices.'},
+    {t:'t-white',  s:'  Quality: No compromise.'},
+    {t:'t-muted',  s:'──────────────────────────────────────'},
+  ],
+  'cat .bashrc': () => [
+    {t:'t-red',    s:'Permission denied: [CLASSIFIED]'},
+    {t:'t-muted',  s:'Some things stay private.'},
+  ],
+  uname: () => [
+    {t:'t-white',  s:'AlifOS 2.26.0 LTS alif-portfolio-kernel SMP x86_64 GNU/Linux'},
+  ],
+  neofetch: () => [
+    {t:'t-green',  s:'        ____    '},
+    {t:'t-green',  s:'       /    \\   alif@portfolio'},
+    {t:'t-green',  s:'      | A·M  |  ──────────────────'},
+    {t:'t-green',  s:'       \\____/   OS: AlifOS 2.26'},
+    {t:'t-muted',  s:'                Host: Apple (Former)'},
+    {t:'t-white',  s:'                Kernel: 5.15.0-LTS'},
+    {t:'t-cyan',   s:'                Shell: bash 5.2.15'},
+    {t:'t-gold',   s:'                Languages: 50+'},
+    {t:'t-white',  s:'                Role: Dev · Photo · Director'},
+    {t:'t-green',  s:'                Status: ● Available'},
+    {t:'t-muted',  s:'                Memory: ∞ (unlimited creativity)'},
+  ],
+  ascii: () => [
+    {t:'t-muted',  s:'┌──────────────────────────────────────────┐'},
+    {t:'t-green',  s:'│  ██████╗  ██████╗ ██████╗ ███████╗      │'},
+    {t:'t-green',  s:'│  ██╔════╝██╔═══██╗██╔══██╗██╔════╝      │'},
+    {t:'t-green',  s:'│  ██║     ██║   ██║██║  ██║█████╗        │'},
+    {t:'t-green',  s:'│  ██║     ██║   ██║██║  ██║██╔══╝        │'},
+    {t:'t-green',  s:'│  ╚██████╗╚██████╔╝██████╔╝███████╗      │'},
+    {t:'t-green',  s:'│   ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝      │'},
+    {t:'t-muted',  s:'└──────────────────────────────────────────┘'},
+    {t:'t-gold',   s:'  ·  Where Code Meets Cinema  ·'},
+  ],
+  matrix: () => {
+    startMatrix();
+    return [{t:'t-green', s:'Initiating deep sequence... Press ESC to exit.'}];
+  },
+  clear: () => { out.innerHTML=''; return []; },
+};
+
+function printLines(lines, delay=0){
+  lines.forEach((l,i)=>{
+    setTimeout(()=>{
+      const span=document.createElement('span');
+      span.className=`term-line ${l.t}`;
+      span.style.animationDelay=`${i*12}ms`;
+      span.textContent=l.s;
+      out.appendChild(span);
+      out.appendChild(document.createTextNode('\n'));
+      out.scrollTop=out.scrollHeight;
+    }, delay + i*14);
+  });
+}
+
+function printPrompt(cmd){
+  const line=document.createElement('span');
+  line.className='term-line t-green';
+  line.textContent=`$ ${cmd}`;
+  out.appendChild(line);
+  out.appendChild(document.createTextNode('\n'));
+}
+
+function printError(cmd){
+  printLines([
+    {t:'t-red',   s:`command not found: ${cmd}`},
+    {t:'t-muted', s:"type 'help' for available commands"},
+  ]);
+}
+
+// Boot sequence
+setTimeout(()=>printLines(BOOT),200);
+
+inp.addEventListener('keydown', e=>{
+  if(e.key==='Enter'){
+    const cmd=inp.value.trim().toLowerCase();
+    if(!cmd){inp.value='';return;}
+    cmdHistory.unshift(cmd);
+    histIdx=-1;
+    printPrompt(cmd);
+    inp.value='';
+    const handler=COMMANDS[cmd];
+    if(handler){ const res=handler(); if(res&&res.length) printLines(res,50); }
+    else printError(cmd);
+  }
+  if(e.key==='ArrowUp'){ histIdx=Math.min(histIdx+1,cmdHistory.length-1); inp.value=cmdHistory[histIdx]||''; }
+  if(e.key==='ArrowDown'){ histIdx=Math.max(histIdx-1,-1); inp.value=histIdx<0?'':cmdHistory[histIdx]; }
+  if(e.key==='Escape'){ stopMatrix(); }
+});
+
+// Matrix effect
+let matrixAF;
+function startMatrix(){
+  const canvas=out;
+  let t=0;
+  function frame(){
+    if(t>60){stopMatrix();return;}
+    const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ';
+    const line=document.createElement('span');
+    line.className='term-line t-green';
+    line.style.opacity=Math.random()*.8+.2;
+    let row='';
+    for(let i=0;i<60;i++) row+=chars[Math.floor(Math.random()*chars.length)];
+    line.textContent=row;
+    canvas.appendChild(line);
+    canvas.appendChild(document.createTextNode('\n'));
+    canvas.scrollTop=canvas.scrollHeight;
+    t++;
+    matrixAF=setTimeout(frame,60);
+  }
+  frame();
+}
+function stopMatrix(){
+  clearTimeout(matrixAF);
+  printLines([{t:'t-muted', s:'— sequence terminated —'}]);
+}
+
+// ═══════════════════════════════════════════════
+// ASCII SNAKE GAME
+// ═══════════════════════════════════════════════
+const W=36, H=22; // grid dimensions
+let snake,dir,nextDir,food,score,hiScore=0,gameRunning,gamePaused,gameOver,gameLoop;
+
+const CHARS = {
+  HEAD: '●',
+  BODY: '○',
+  FOOD: '◆',
+  EMPTY: ' ',
+  H_WALL: '═',
+  V_WALL: '║',
+  CORN: ['╔','╗','╚','╝']
+};
+
+function initGame(){
+  snake = [{x:Math.floor(W/2), y:Math.floor(H/2)}];
+  dir = {x:1, y:0};
+  nextDir = {x:1, y:0};
+  score = 0;
+  gameOver = false;
+  gamePaused = false;
+  placeFood();
+  document.getElementById('gScore').textContent = 0;
+  if(gameLoop) clearInterval(gameLoop);
+  gameRunning = true;
+  gameLoop = setInterval(tickGame, 130);
+  renderGame();
+}
+
+function placeFood(){
+  let pos;
+  do { pos = {x: 1+Math.floor(Math.random()*(W-2)), y: 1+Math.floor(Math.random()*(H-2))}; }
+  while(snake.some(s=>s.x===pos.x&&s.y===pos.y));
+  food = pos;
+}
+
+function tickGame(){
+  if(gamePaused||gameOver) return;
+  dir = {...nextDir};
+  const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
+  // wall collision
+  if(head.x<=0||head.x>=W-1||head.y<=0||head.y>=H-1){
+    endGame(); return;
+  }
+  // self collision
+  if(snake.some(s=>s.x===head.x&&s.y===head.y)){
+    endGame(); return;
+  }
+  snake.unshift(head);
+  if(head.x===food.x&&head.y===food.y){
+    score+=10;
+    if(score>hiScore) hiScore=score;
+    document.getElementById('gScore').textContent=score;
+    document.getElementById('gHi').textContent=hiScore;
+    placeFood();
+  } else {
+    snake.pop();
+  }
+  renderGame();
+}
+
+function renderGame(){
+  // Build grid
+  const grid = Array.from({length:H},()=>Array(W).fill(CHARS.EMPTY));
+  // Walls
+  for(let x=0;x<W;x++){ grid[0][x]=CHARS.H_WALL; grid[H-1][x]=CHARS.H_WALL; }
+  for(let y=0;y<H;y++){ grid[y][0]=CHARS.V_WALL; grid[y][W-1]=CHARS.V_WALL; }
+  grid[0][0]=CHARS.CORN[0]; grid[0][W-1]=CHARS.CORN[1];
+  grid[H-1][0]=CHARS.CORN[2]; grid[H-1][W-1]=CHARS.CORN[3];
+  // Food
+  grid[food.y][food.x]=CHARS.FOOD;
+  // Snake body
+  snake.forEach((s,i)=>{ if(grid[s.y]&&grid[s.y][s.x]!==undefined) grid[s.y][s.x]=(i===0?CHARS.HEAD:CHARS.BODY); });
+
+  if(gameOver){
+    const msg=' GAME OVER ';
+    const sy=Math.floor(H/2);
+    const sx=Math.floor((W-msg.length)/2);
+    for(let i=0;i<msg.length;i++) grid[sy][sx+i]=msg[i];
+    const sub=' PRESS R ';
+    const sx2=Math.floor((W-sub.length)/2);
+    for(let i=0;i<sub.length;i++) grid[sy+1][sx2+i]=sub[i];
+  }
+  if(gamePaused&&!gameOver){
+    const msg=' PAUSED ';
+    const sy=Math.floor(H/2);
+    const sx=Math.floor((W-msg.length)/2);
+    for(let i=0;i<msg.length;i++) grid[sy][sx+i]=msg[i];
+  }
+
+  document.getElementById('gameCanvas').textContent=grid.map(r=>r.join('')).join('\n');
+}
+
+function endGame(){
+  gameOver=true;
+  clearInterval(gameLoop);
+  gameRunning=false;
+  renderGame();
+}
+
+// Controls
+document.addEventListener('keydown', e=>{
+  const k=e.key;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','w','a','s','d','W','A','S','D'].includes(k)){
+    // prevent page scroll only when game has focus
+    if(document.activeElement!==inp) e.preventDefault();
+  }
+  if(gameOver&&(k==='r'||k==='R')) { initGame(); return; }
+  if(k===' '||k==='Escape') { gamePaused=!gamePaused; return; }
+  const dirs = {
+    ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0},
+    w:{x:0,y:-1},s:{x:0,y:1},a:{x:-1,y:0},d:{x:1,y:0},
+    W:{x:0,y:-1},S:{x:0,y:1},A:{x:-1,y:0},D:{x:1,y:0},
+  };
+  if(dirs[k]){
+    const nd=dirs[k];
+    // prevent reversing
+    if(nd.x===-dir.x&&nd.y===-dir.y) return;
+    nextDir=nd;
+  }
+});
+
+// D-pad (mobile)
+document.querySelectorAll('.dpad-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const d=btn.dataset.dir;
+    const map={UP:{x:0,y:-1},DOWN:{x:0,y:1},LEFT:{x:-1,y:0},RIGHT:{x:1,y:0}};
+    const nd=map[d];
+    if(!nd||gameOver) return;
+    if(nd.x===-dir.x&&nd.y===-dir.y) return;
+    nextDir=nd;
+  });
+});
+
+// Restart button
+document.getElementById('restartBtn').addEventListener('click',initGame);
+
+// Start game
+initGame();
+
+// Focus input on click in terminal area
+document.querySelector('.term-panel').addEventListener('click',()=>inp.focus());
+inp.focus();
+</script>
+</body>
+</html>

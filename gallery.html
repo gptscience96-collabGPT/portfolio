@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gallery — Alif Media</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#080808;--white:#f2efe8;--red:#c8392b;--gold:#b8965a;
+  --dim2:#1a1815;--muted:#7a7060;--gap:5px;
+  --fd:'Bebas Neue',sans-serif;--fs:'Playfair Display',serif;--fm:'DM Mono',monospace;
+  --ease-ios:cubic-bezier(.25,.46,.45,.94);
+  --ease-spring:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+/* MOBILE SCROLL FIX: ensure body scrolls properly on all mobile browsers */
+html,body{
+  background:var(--black);color:var(--white);font-family:var(--fm);font-size:13px;
+  overflow-x:hidden;
+  /* Remove any accidental height constraints */
+  min-height:100%;
+}
+body{
+  /* ensure touch-scroll works on iOS/Android */
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+}
+
+/* cursor — desktop only */
+@media(pointer:fine){
+  body{cursor:none;}
+  .cur{width:10px;height:10px;background:var(--red);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .25s var(--ease-spring),height .25s var(--ease-spring);mix-blend-mode:difference;}
+  .cur.big{width:38px;height:38px;background:var(--white);}
+  .cur-ring{width:28px;height:28px;border:1px solid rgba(242,239,232,.22);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .16s var(--ease-ios);}
+}
+
+/* noise */
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");pointer-events:none;z-index:9990;opacity:.4;}
+
+/* ── FAST LOADER ── */
+#loader{position:fixed;inset:0;z-index:99999;background:var(--black);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ld-logo{font-family:var(--fd);font-size:clamp(48px,10vw,90px);letter-spacing:.12em;overflow:hidden;}
+.ld-logo>span{color:var(--red);}
+.ld-inner{display:block;transform:translateY(110%);animation:ldUp .5s var(--ease-spring) .05s forwards;}
+.ld-sub2{font-size:9px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted);margin-top:10px;opacity:0;animation:ldFd .3s ease .55s forwards;text-align:center;}
+.ld-bar-wrap2{position:absolute;bottom:clamp(40px,8vw,64px);width:160px;}
+.ld-bar-bg2{height:1px;background:rgba(242,239,232,.1);}
+.ld-bar-fill2{height:1px;background:var(--red);width:0;}
+@keyframes ldUp{to{transform:translateY(0);}}
+@keyframes ldFd{to{opacity:1;}}
+#loader.gone{display:none;}
+
+/* ── NAV — zero gap ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:56px;padding:0 24px;
+  display:flex;justify-content:space-between;align-items:center;
+  background:rgba(8,8,8,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:rgba(242,239,232,.07);}
+.nav-logo{font-family:var(--fd);font-size:19px;letter-spacing:.12em;color:var(--white);text-decoration:none;transition:opacity .18s;}
+.nav-logo:hover{opacity:.65;}
+.nav-logo span{color:var(--red);}
+.nav-back{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .18s,transform .2s var(--ease-spring);padding:8px 0;}
+.nav-back:hover{color:var(--white);transform:translateX(-3px);}
+.nav-back svg{width:15px;flex-shrink:0;}
+
+/* ── PAGE HEADER ── */
+.page-hdr{padding:clamp(80px,14vw,130px) 24px clamp(32px,5vw,52px);position:relative;overflow:hidden;}
+.page-hdr::before{content:'GALLERY';position:absolute;right:-16px;top:50%;transform:translateY(-50%);font-family:var(--fd);font-size:clamp(80px,18vw,200px);color:rgba(242,239,232,.018);user-select:none;line-height:1;white-space:nowrap;}
+.ph-lbl{font-size:9px;color:var(--red);letter-spacing:.3em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:12px;}
+.ph-lbl::before{content:'';width:28px;height:1px;background:var(--red);}
+.ph-h1{font-family:var(--fd);font-size:clamp(52px,11vw,130px);line-height:.88;letter-spacing:.02em;opacity:0;transform:translateY(20px);animation:hdrIn .65s var(--ease-spring) .3s forwards;}
+.ph-sub{font-family:var(--fs);font-style:italic;font-size:clamp(13px,2vw,17px);color:var(--gold);margin-top:10px;opacity:0;animation:hdrIn .5s var(--ease-ios) .5s forwards;}
+.ph-note{font-size:10px;color:var(--muted);letter-spacing:.12em;margin-top:6px;opacity:0;animation:hdrIn .5s var(--ease-ios) .6s forwards;}
+@keyframes hdrIn{to{opacity:1;transform:translateY(0);}}
+
+/* ── FILTER BAR ── */
+.filter-bar{
+  padding:0 24px clamp(28px,4vw,44px);
+  display:flex;gap:8px;flex-wrap:wrap;
+  /* mobile: horizontal scroll if needed */
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.filter-bar::-webkit-scrollbar{display:none;}
+.fb{
+  padding:7px 18px;border:1px solid rgba(242,239,232,.1);
+  font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);background:none;
+  transition:all .18s var(--ease-ios);
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  cursor:pointer;white-space:nowrap;flex-shrink:0;
+}
+.fb.active,.fb:hover{border-color:var(--red);color:var(--white);background:rgba(200,57,43,.07);}
+
+/* ── MASONRY GRID ── */
+.gallery-outer{
+  padding:0 24px clamp(80px,12vw,140px);
+  /* MOBILE SCROLL: ensure content scrolls freely */
+  overflow:visible;
+  position:relative;
+  z-index:1;
+}
+.gallery-grid{
+  columns:3;column-gap:var(--gap);
+  /* critical for mobile: don't block scroll */
+  touch-action:pan-y;
+}
+
+/* ── TILE ── */
+.tile{
+  break-inside:avoid;
+  margin-bottom:var(--gap);
+  position:relative;overflow:hidden;
+  background:#0d0d0d;
+  transition:filter .4s var(--ease-ios),transform .4s var(--ease-spring);
+  -webkit-tap-highlight-color:transparent;
+  /* GPU layer */
+  will-change:transform;transform:translateZ(0);
+}
+
+/* Tile reveal animation */
+.tile{opacity:0;transform:translateY(16px) translateZ(0);}
+.tile.visible{opacity:1;transform:translateY(0) translateZ(0);transition:opacity .5s var(--ease-ios),transform .5s var(--ease-spring),filter .4s var(--ease-ios);}
+
+/* aspect ratio wrapper */
+.tile-ar{position:relative;width:100%;overflow:hidden;}
+.tile-ar iframe{
+  position:absolute;inset:0;width:100%;height:100%;border:none;
+  pointer-events:none;/* let tile handle hover/tap */
+}
+.tile.is-video .tile-ar iframe{pointer-events:auto;}
+
+/* label overlay */
+.tile-lbl{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:28px 14px 12px;
+  background:linear-gradient(to top,rgba(8,8,8,.88),transparent);
+  opacity:0;transition:opacity .25s var(--ease-ios);
+  pointer-events:none;z-index:2;
+}
+.tile:hover .tile-lbl,
+.tile.touch-show .tile-lbl{opacity:1;}
+.tile-cat{font-size:8px;color:var(--red);letter-spacing:.22em;text-transform:uppercase;margin-bottom:3px;}
+.tile-name{font-family:var(--fd);font-size:15px;letter-spacing:.04em;color:var(--white);}
+.tile-date{font-size:9px;color:var(--muted);margin-top:2px;}
+
+/* ── HOVER: blur others (desktop only) ── */
+@media(pointer:fine){
+  .gallery-grid.has-focus .tile:not(.focused){
+    filter:blur(2px) brightness(.38);
+    transform:scale(.985) translateZ(0);
+  }
+  .gallery-grid.has-focus .tile.focused{
+    filter:none;
+    transform:scale(1.022) translateZ(0);
+    z-index:10;position:relative;
+  }
+}
+
+/* neighbor nudge */
+@keyframes nudge{0%{transform:translateY(0) translateZ(0);}40%{transform:translateY(-4px) translateZ(0);}100%{transform:translateY(0) translateZ(0);}}
+.tile.nudge{animation:nudge .45s var(--ease-spring) forwards;}
+.tile.focused.nudge{animation:none;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .gallery-grid{columns:2;}
+}
+@media(max-width:480px){
+  .gallery-grid{
+    columns:1;
+    /* single column for best mobile experience */
+  }
+  .gallery-outer{padding:0 16px clamp(60px,10vw,100px);}
+  .filter-bar{padding:0 16px clamp(20px,4vw,36px);}
+  /* Slightly larger tiles on mobile */
+  .tile{margin-bottom:8px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="ld-logo"><span class="ld-inner">AL<span>·</span>IF</span></div>
+  <div class="ld-sub2">Visual Archive</div>
+  <div class="ld-bar-wrap2"><div class="ld-bar-bg2"><div class="ld-bar-fill2" id="ldBar2"></div></div></div>
+</div>
+
+<div class="cur" id="cur"></div>
+<div class="cur-ring" id="curR"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">AL<span>·</span>IF</a>
+  <a href="index.html" class="nav-back">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back
+  </a>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-hdr">
+  <div class="ph-lbl">Visual Archive · Alif Media</div>
+  <h1 class="ph-h1">GALLERY</h1>
+  <div class="ph-sub">All my captures — photos &amp; films</div>
+  <div class="ph-note">18 items</div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <button class="fb active" data-filter="all">All</button>
+  <button class="fb" data-filter="photo">Photos</button>
+  <button class="fb" data-filter="video">Videos</button>
+  <button class="fb" data-filter="portrait">Portraits</button>
+  <button class="fb" data-filter="event">Events</button>
+</div>
+
+<!-- GALLERY GRID
+     Drive /preview URLs — all files must be set to "Anyone with link can view"
+     Aspect ratios:
+       56.25% = 16:9  |  75% = 4:3  |  133.33% = 3:4 portrait
+-->
+<div class="gallery-outer">
+<div class="gallery-grid" id="grid">
+
+  <!-- ══ VIDEOS ══ -->
+
+  <!-- Video 1: Morning Glory Reel (main school reel) -->
+  <div class="tile is-video" data-filter="video event" data-title="Morning Glory Reel" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:56.25%">
+      <iframe src="https://drive.google.com/file/d/1T5Rs9UqXQyjDJrQmlYhIHRu5qUa28fr3/preview" allow="autoplay;encrypted-media;fullscreen" allowfullscreen referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Video · Event</div><div class="tile-name">Morning Glory Reel</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <!-- Video 2: Second video -->
+  <div class="tile is-video" data-filter="video event" data-title="Alif Media — Film" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:56.25%">
+      <iframe src="https://drive.google.com/file/d/1KhEKPgdUmwiW8wzJbNj2cU-FXlFvY1Ct/preview" allow="autoplay;encrypted-media;fullscreen" allowfullscreen referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Video · Film</div><div class="tile-name">Alif Media — Film</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <!-- ══ PHOTOS ══ -->
+
+  <div class="tile" data-filter="photo event" data-title="Morning Light" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:75%">
+      <iframe src="https://drive.google.com/file/d/15olkyJvg4TZKi7U76VWpJ743BLAj-hwH/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Event</div><div class="tile-name">Morning Light</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <div class="tile" data-filter="photo event" data-title="The Gathering" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:75%">
+      <iframe src="https://drive.google.com/file/d/1wgrpax1OIXhVJOS_dOEV-ja-KbJc6W2c/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Event</div><div class="tile-name">The Gathering</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <div class="tile" data-filter="photo event" data-title="Wide Frame" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:56.25%">
+      <iframe src="https://drive.google.com/file/d/1J8aWafaXitc6lS3xLSwKn7b5jmkE8uYh/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Event</div><div class="tile-name">Wide Frame</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <div class="tile" data-filter="photo portrait" data-title="Still" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:75%">
+      <iframe src="https://drive.google.com/file/d/1QS2JOBkvn4PaT3gnkYkkPJ2EVmtm6wXk/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Portrait</div><div class="tile-name">Still</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <div class="tile" data-filter="photo portrait" data-title="Presence" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:133.33%">
+      <iframe src="https://drive.google.com/file/d/1Zm5JGFQEyskgxTDSifF30RRuAC-D_d0u/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Portrait</div><div class="tile-name">Presence</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <div class="tile" data-filter="photo event" data-title="In Motion" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:75%">
+      <iframe src="https://drive.google.com/file/d/1ci3udN4NB7M1KdBd6XU3ACdpWCLxhtL_/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Event</div><div class="tile-name">In Motion</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <div class="tile" data-filter="photo event" data-title="Campus Life" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:75%">
+      <iframe src="https://drive.google.com/file/d/11ui80bQmszp739hE872zyK0uAmbH4o4D/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Event</div><div class="tile-name">Campus Life</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <!-- Campus photo (also shown on main page) -->
+  <div class="tile" data-filter="photo event" data-title="Campus — Morning Glory" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:75%">
+      <iframe src="https://drive.google.com/file/d/1mdwRqtLCcVtmsRlrGw8fHG_6sLDearzO/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Campus</div><div class="tile-name">Campus — Morning Glory</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <div class="tile" data-filter="photo portrait" data-title="Quiet" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:133.33%">
+      <iframe src="https://drive.google.com/file/d/1cmnUL1SV2SRYLgSXHUYXrjHmV9a222sK/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Portrait</div><div class="tile-name">Quiet</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <div class="tile" data-filter="photo event" data-title="Faces &amp; Stories" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:75%">
+      <iframe src="https://drive.google.com/file/d/12YVxlEQaUmvi9V2rD1WMZWEYuJWODR77/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Event</div><div class="tile-name">Faces &amp; Stories</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <div class="tile" data-filter="photo event" data-title="Candid" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:75%">
+      <iframe src="https://drive.google.com/file/d/1EV-9ujfgtZ8KB9wWUTLBq1gqrN0TstCt/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Event</div><div class="tile-name">Candid</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <div class="tile" data-filter="photo portrait" data-title="The Look" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:133.33%">
+      <iframe src="https://drive.google.com/file/d/1OZRn88vVKgrPPmW3c0snAb0Nlf7Py35V/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Portrait</div><div class="tile-name">The Look</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <!-- Portrait photo -->
+  <div class="tile" data-filter="photo portrait" data-title="Frame" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:133.33%">
+      <iframe src="https://drive.google.com/file/d/1DA1DALcyssphcvHGDuwYsAAt2OX4lR6E/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Portrait</div><div class="tile-name">Frame</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <div class="tile" data-filter="photo event" data-title="Horizon" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:56.25%">
+      <iframe src="https://drive.google.com/file/d/1qTcolaAf712X6Sl0i5trjj_wrBg3ENr9/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Event</div><div class="tile-name">Horizon</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <div class="tile" data-filter="photo event" data-title="Detail" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:75%">
+      <iframe src="https://drive.google.com/file/d/1C5g0stZJq6Gg7RICuSBi-_IFb5AZxA2i/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Event</div><div class="tile-name">Detail</div><div class="tile-date">2026</div></div>
+  </div>
+
+  <div class="tile" data-filter="photo event" data-title="Last Light" data-date="2026">
+    <div class="tile-ar" style="padding-bottom:75%">
+      <iframe src="https://drive.google.com/file/d/1wZsGr_WbNDtCwPlwi6wRJPIJ37cgHvyR/preview" referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+    </div>
+    <div class="tile-lbl"><div class="tile-cat">Photo · Event</div><div class="tile-name">Last Light</div><div class="tile-date">2026</div></div>
+  </div>
+
+</div><!-- /grid -->
+</div><!-- /gallery-outer -->
+
+<script>
+// ── FAST LOADER ──
+(function(){
+  const bar=document.getElementById('ldBar2');
+  const start=performance.now();
+  const dur=700;
+  function frame(now){
+    const t=Math.min((now-start)/dur,1);
+    const p=1-Math.pow(1-t,3);
+    bar.style.width=(p*160)+'px';
+    if(t<1){ requestAnimationFrame(frame); }
+    else {
+      bar.style.width='160px';
+      setTimeout(()=>{
+        document.getElementById('loader').classList.add('gone');
+        revealTiles();
+      },100);
+    }
+  }
+  requestAnimationFrame(frame);
+})();
+
+// ── TILE REVEAL AFTER LOADER ──
+function revealTiles(){
+  const tiles=document.querySelectorAll('.tile:not([style*="display:none"])');
+  tiles.forEach((t,i)=>{
+    setTimeout(()=>t.classList.add('visible'), Math.min(i*20, 400));
+  });
+}
+
+// ── CURSOR (desktop) ──
+if(window.matchMedia('(pointer:fine)').matches){
+  const cur=document.getElementById('cur'),ring=document.getElementById('curR');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;},{passive:true});
+  (function tick(){
+    rx+=(mx-rx)*.13;ry+=(my-ry)*.13;
+    cur.style.left=mx+'px';cur.style.top=my+'px';
+    ring.style.left=rx+'px';ring.style.top=ry+'px';
+    requestAnimationFrame(tick);
+  })();
+  document.querySelectorAll('a,.tile,.fb').forEach(el=>{
+    el.addEventListener('mouseenter',()=>cur.classList.add('big'));
+    el.addEventListener('mouseleave',()=>cur.classList.remove('big'));
+  });
+}
+
+// ── FILTER ──
+document.querySelectorAll('.fb').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelector('.fb.active').classList.remove('active');
+    btn.classList.add('active');
+    const f=btn.dataset.filter;
+    document.querySelectorAll('.tile').forEach(t=>{
+      const match = f==='all' || t.dataset.filter.includes(f);
+      if(match){
+        t.style.display='';
+        setTimeout(()=>t.classList.add('visible'),10);
+      } else {
+        t.style.display='none';
+        t.classList.remove('visible');
+      }
+    });
+  });
+});
+
+// ── HOVER FOCUS (desktop only) ──
+const grid=document.getElementById('grid');
+const isDesktop=window.matchMedia('(pointer:fine)').matches;
+if(isDesktop){
+  let hoverTimer;
+  document.querySelectorAll('.tile').forEach((tile,i,arr)=>{
+    tile.addEventListener('mouseenter',()=>{
+      clearTimeout(hoverTimer);
+      hoverTimer=setTimeout(()=>{
+        grid.classList.add('has-focus');
+        tile.classList.add('focused');
+        // nudge neighbors
+        const tiles=[...arr];
+        const idx=tiles.indexOf(tile);
+        [idx-1,idx+1].forEach(ni=>{
+          if(tiles[ni]&&!tiles[ni].classList.contains('focused')){
+            tiles[ni].classList.remove('nudge');
+            void tiles[ni].offsetWidth;
+            tiles[ni].classList.add('nudge');
+          }
+        });
+      },200);
+    });
+    tile.addEventListener('mouseleave',()=>{
+      clearTimeout(hoverTimer);
+      grid.classList.remove('has-focus');
+      tile.classList.remove('focused');
+    });
+    tile.addEventListener('animationend',()=>tile.classList.remove('nudge'));
+  });
+}
+
+// ── TAP TO SHOW LABEL (mobile) ──
+if(!isDesktop){
+  document.querySelectorAll('.tile').forEach(tile=>{
+    tile.addEventListener('click',()=>{
+      const shown=tile.classList.contains('touch-show');
+      document.querySelectorAll('.tile.touch-show').forEach(t=>t.classList.remove('touch-show'));
+      if(!shown) tile.classList.add('touch-show');
+    });
+  });
+}
+
+// ── REDUCE MOTION ──
+if(window.matchMedia('(prefers-reduced-motion:reduce)').matches){
+  document.querySelectorAll('.tile').forEach(t=>{t.style.transition='none';t.classList.add('visible');});
+}
+</script>
+</body>
+</html>
